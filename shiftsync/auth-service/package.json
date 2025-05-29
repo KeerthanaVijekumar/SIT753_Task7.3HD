@@ -3,9 +3,9 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-  "start": "node auth.js",
-  "test": "node test.js"
-},
+    "start": "node auth.js",
+    "test": "mocha tests/*.test.js"
+  },
   "keywords": [],
   "author": "",
   "license": "ISC",
@@ -17,5 +17,8 @@
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.15.0"
   },
-  "description": ""
+  "description": "",
+  "devDependencies": {
+    "mocha": "^11.5.0"
+  }
 }
