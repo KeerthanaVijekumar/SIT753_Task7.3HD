@@ -45,22 +45,22 @@ pipeline {
       }
     }
 
-stage('Security Analysis') {
+    stage('Security Analysis') {
   steps {
     script {
-      // Run npm audit and produce JSON report
+      // 1) Install deps and produce audit-report.json
       bat """
         cd shiftsync\\auth-service
         npm install
         npm audit --json > audit-report.json
       """
-      
-      // Read the raw JSON text
+
+      // 2) Read & parse the JSON
       def raw = readFile 'shiftsync/auth-service/audit-report.json'
       def auditReport = new groovy.json.JsonSlurper().parseText(raw)
-      
-      // Extract vulnerability counts
-      def vuln = auditReport.metadata.vulnerabilities
+
+      // 3) Extract vulnerability counts
+      def vuln     = auditReport.metadata.vulnerabilities
       def critical = vuln.critical ?: 0
       def high     = vuln.high     ?: 0
       def moderate = vuln.moderate ?: 0
@@ -72,16 +72,15 @@ stage('Security Analysis') {
       echo "  Moderate: ${moderate}"
       echo "  Low:      ${low}"
 
-      // Fail the build if any high or critical issues
+      // 4) Fail on any high/critical findings
       if (critical > 0 || high > 0) {
-        error("Build aborted: ${critical} critical and ${high} high vulnerabilities detected.")
+        error("Build abort: ${critical} critical / ${high} high vulnerabilities detected.")
       } else {
-        echo("No critical/high vulnerabilities detected. Continuing pipeline.")
+        echo "No critical/high vulnerabilities—proceeding."
       }
     }
   }
 }
-
 
   }
 }
