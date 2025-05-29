@@ -1,0 +1,10 @@
+apiVersion: deploy.cloud.google.com/v1
+kind: Target
+metadata:
+  name: staging
+spec:
+  gke:
+    cluster:    shiftsync-cluster
+    location:   australia-southeast1-b
+    namespace:  default
+    internalIp: false

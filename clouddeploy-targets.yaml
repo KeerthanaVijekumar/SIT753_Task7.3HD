@@ -1,0 +1,24 @@
+---
+apiVersion: deploy.cloud.google.com/v1
+kind: Target
+metadata:
+  name: staging
+spec:
+  requireApproval: false
+  gke:
+    cluster:    shiftsync-cluster
+    location:   australia-southeast1-b
+    namespace:  default
+    internalIp: false
+---
+apiVersion: deploy.cloud.google.com/v1
+kind: Target
+metadata:
+  name: prod
+spec:
+  requireApproval: true
+  gke:
+    cluster:    shiftsync-cluster
+    location:   australia-southeast1-b
+    namespace:  default
+    internalIp: false
