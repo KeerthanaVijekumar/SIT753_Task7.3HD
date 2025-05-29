@@ -24,19 +24,29 @@ pipeline {
 }
 
 stage('Build & Push Docker Image') {
-      steps {
-        script {
-          def dockerLogin = 'echo %REGISTRY_CREDENTIALS_PSW% | docker login -u _json_key --password-stdin https://australia-southeast1-docker.pkg.dev'
+  steps {
+    dir('shiftsync/auth-service') {
+      // bind your _json_key / JSON blob
+      withCredentials([usernamePassword(
+        credentialsId: 'gcp-artifact-creds',
+        usernameVariable: 'DOCKER_USR',
+        passwordVariable: 'DOCKER_PSW'
+      )]) {
+        // everything in one bat block
+        bat """
+          REM — build the container
+          docker build -t %IMAGE_NAME%:latest .
 
-          bat """
-            docker build -t ${IMAGE_NAME}:latest .
-            ${dockerLogin}
-            docker push ${IMAGE_NAME}:latest
-          """
-        }
+          REM — login via JSON key
+          echo %DOCKER_PSW% | docker login -u %DOCKER_USR% --password-stdin https://australia-southeast1-docker.pkg.dev
+
+          REM — push to Artifact Registry
+          docker push %IMAGE_NAME%:latest
+        """
       }
     }
-
+  }
+}
 
     stage('Run Unit Tests') {
       steps {
