@@ -5,6 +5,10 @@ pipeline {
     IMAGE_NAME           = "australia-southeast1-docker.pkg.dev/shiftsync-gcp/shiftsync-repo/auth-service"
     REGISTRY_CREDENTIALS = credentials('gcp-artifact-creds')
     JWT_SECRET           = credentials('jwt-secret')
+    GCP_PROJECT          = "shiftsync-gcp"
+    GKE_CLUSTER          = "shiftsync-cluster"
+    GKE_ZONE             = "australia-southeast1-b"
+    K8S_NAMESPACE        = "default"
   }
 
   stages {
@@ -57,14 +61,23 @@ pipeline {
       }
     }
 
-        stage('Deploy') {
+        stage('Deploy to GKE') {
       steps {
-        script {
+        withCredentials([file(credentialsId: 'gcp-service-account', variable: 'GCLOUD_KEY')]) {
           bat """
-            cd shiftsync\\auth-service
-            docker run --rm ^
-              -e JWT_SECRET=%JWT_SECRET% ^
-              -p 3000:3000 ${IMAGE_NAME}:latest
+            REM ─ Authenticate to GCP
+            gcloud auth activate-service-account --key-file="%GCLOUD_KEY%"
+            gcloud config set project %GCP_PROJECT%
+
+            REM ─ Fetch kubeconfig for your cluster
+            gcloud container clusters get-credentials %GKE_CLUSTER% --zone %GKE_ZONE%
+
+            REM ─ Deploy your manifests (which can reference ${JWT_SECRET} via a k8s Secret)
+            kubectl apply -n %K8S_NAMESPACE% -f "%WORKSPACE%\\kube\\auth-deployment.yaml"
+            kubectl apply -n %K8S_NAMESPACE% -f "%WORKSPACE%\\kube\\auth-service.yaml"
+
+            REM ─ Wait for a successful rollout
+            kubectl rollout status deployment/auth-service -n %K8S_NAMESPACE%
           """
         }
       }
