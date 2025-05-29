@@ -2,7 +2,7 @@ pipeline {
   agent any
 
   environment {
-    IMAGE_NAME = "australia-southeast1-docker.pkg.dev/shiftsync-gcpCT_ID/shiftsync-repo/auth-service"
+    IMAGE_NAME = "australia-southeast1-docker.pkg.dev/shiftsync-gcp/shiftsync-repo/auth-service"
     REGISTRY_CREDENTIALS = credentials('gcp-artifact-creds')
   }
 
@@ -10,9 +10,11 @@ pipeline {
     stage('Build & Push Docker Image') {
       steps {
         script {
-          sh """
+          def dockerLogin = 'echo %REGISTRY_CREDENTIALS_PSW% | docker login -u _json_key --password-stdin https://australia-southeast1-docker.pkg.dev'
+
+          bat """
             docker build -t ${IMAGE_NAME}:latest .
-            echo $REGISTRY_CREDENTIALS_PSW | docker login -u _json_key --password-stdin https://australia-southeast1-docker.pkg.dev
+            ${dockerLogin}
             docker push ${IMAGE_NAME}:latest
           """
         }
