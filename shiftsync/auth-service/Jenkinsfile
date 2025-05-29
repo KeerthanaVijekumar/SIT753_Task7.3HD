@@ -2,7 +2,7 @@ pipeline {
   agent any
 
   environment {
-    IMAGE_NAME = "australia-southeast1-docker.pkg.dev/shiftsync-gcp/shiftsync-repo/auth-service"
+    IMAGE_NAME           = "australia-southeast1-docker.pkg.dev/shiftsync-gcp/shiftsync-repo/auth-service"
     REGISTRY_CREDENTIALS = credentials('gcp-artifact-creds')
   }
 
@@ -11,7 +11,6 @@ pipeline {
       steps {
         script {
           def dockerLogin = 'echo %REGISTRY_CREDENTIALS_PSW% | docker login -u _json_key --password-stdin https://australia-southeast1-docker.pkg.dev'
-
           bat """
             cd shiftsync\\auth-service
             docker build -t ${IMAGE_NAME}:latest .
@@ -39,48 +38,22 @@ pipeline {
             cd shiftsync\\auth-service
             curl -Lo sonar-scanner.zip https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-5.0.1.3006-windows.zip
             powershell -Command "Expand-Archive -Path sonar-scanner.zip -DestinationPath . -Force"
-            .\\sonar-scanner-5.0.1.3006-windows\\bin\\sonar-scanner.bat -Dsonar.login=%SONAR_TOKEN% -Dsonar.host.url=https://sonarcloud.io -Dproject.settings=sonar-project.properties
+            .\\sonar-scanner-5.0.1.3006-windows\\bin\\sonar-scanner.bat -Dsonar.token=%SONAR_TOKEN% -Dsonar.host.url=https://sonarcloud.io -Dproject.settings=sonar-project.properties
           '''
         }
       }
     }
 
     stage('Security Analysis') {
-  steps {
-    script {
-      // 1) Install deps and produce audit-report.json
-      bat """
-        cd shiftsync\\auth-service
-        npm install
-        npm audit --json > audit-report.json
-      """
-
-      // 2) Read & parse the JSON
-      def raw = readFile 'shiftsync/auth-service/audit-report.json'
-      def auditReport = new groovy.json.JsonSlurper().parseText(raw)
-
-      // 3) Extract vulnerability counts
-      def vuln     = auditReport.metadata.vulnerabilities
-      def critical = vuln.critical ?: 0
-      def high     = vuln.high     ?: 0
-      def moderate = vuln.moderate ?: 0
-      def low      = vuln.low      ?: 0
-
-      echo "Security Audit Summary:"
-      echo "  Critical: ${critical}"
-      echo "  High:     ${high}"
-      echo "  Moderate: ${moderate}"
-      echo "  Low:      ${low}"
-
-      // 4) Fail on any high/critical findings
-      if (critical > 0 || high > 0) {
-        error("Build abort: ${critical} critical / ${high} high vulnerabilities detected.")
-      } else {
-        echo "No critical/high vulnerabilities—proceeding."
+      steps {
+        script {
+          bat """
+            cd shiftsync\\auth-service
+            npm install
+            npm audit --audit-level=high
+          """
+        }
       }
     }
-  }
-}
-
   }
 }
