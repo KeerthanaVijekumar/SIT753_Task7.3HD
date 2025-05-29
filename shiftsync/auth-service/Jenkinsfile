@@ -4,6 +4,7 @@ pipeline {
   environment {
     IMAGE_NAME           = "australia-southeast1-docker.pkg.dev/shiftsync-gcp/shiftsync-repo/auth-service"
     REGISTRY_CREDENTIALS = credentials('gcp-artifact-creds')
+    JWT_SECRET           = credentials('jwt-secret')
   }
 
   stages {
@@ -51,6 +52,19 @@ pipeline {
             cd shiftsync\\auth-service
             npm install
             npm audit --audit-level=high
+          """
+        }
+      }
+    }
+
+        stage('Deploy') {
+      steps {
+        script {
+          bat """
+            cd shiftsync\\auth-service
+            docker run --rm ^
+              -e JWT_SECRET=%JWT_SECRET% ^
+              -p 3000:3000 ${IMAGE_NAME}:latest
           """
         }
       }
