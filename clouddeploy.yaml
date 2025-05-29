@@ -1,0 +1,33 @@
+# clouddeploy.yaml
+
+apiVersion: deploy.cloud.google.com/v1
+kind: DeliveryPipeline
+metadata:
+  name: auth-service-pipeline
+spec:
+  serialPipeline:
+    stages:
+      - targetId: staging
+      - targetId: prod
+---
+apiVersion: deploy.cloud.google.com/v1
+kind: Target
+metadata:
+  name: staging
+spec:
+  gke:
+    cluster: projects/shiftsync-gcp/locations/australia-southeast1-b/clusters/shiftsync-cluster
+    namespace: default
+    internalIp: false
+  requireApproval: false
+---
+apiVersion: deploy.cloud.google.com/v1
+kind: Target
+metadata:
+  name: prod
+spec:
+  gke:
+    cluster: projects/shiftsync-gcp/locations/australia-southeast1-b/clusters/shiftsync-cluster
+    namespace: default
+    internalIp: false
+  requireApproval: true
