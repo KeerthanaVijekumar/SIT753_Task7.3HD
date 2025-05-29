@@ -7,13 +7,13 @@ pipeline {
   }
 
   stages {
-
     stage('Build & Push Docker Image') {
       steps {
         script {
           def dockerLogin = 'echo %REGISTRY_CREDENTIALS_PSW% | docker login -u _json_key --password-stdin https://australia-southeast1-docker.pkg.dev'
 
           bat """
+            cd shiftsync\\auth-service
             docker build -t ${IMAGE_NAME}:latest .
             ${dockerLogin}
             docker push ${IMAGE_NAME}:latest
@@ -25,13 +25,11 @@ pipeline {
     stage('Run Unit Tests') {
       steps {
         bat """
+          cd shiftsync\\auth-service
           npm install
-          start /B node auth.js
-          timeout /T 3
           npm test
         """
       }
     }
-
   }
 }
