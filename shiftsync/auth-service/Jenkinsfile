@@ -26,30 +26,24 @@ pipeline {
 stage('Build & Push Docker Image') {
   steps {
     dir('shiftsync/auth-service') {
-      // bind your _json_key / JSON blob
-      withCredentials([usernamePassword(
-        credentialsId: 'gcp-artifact-creds',
-        usernameVariable: 'DOCKER_USR',
-        passwordVariable: 'DOCKER_PSW'
+      withCredentials([file(
+        credentialsId: 'gcp-artifact-creds-file',
+        variable: 'GCLOUD_KEY'
       )]) {
-        // everything in one bat block
         bat """
-          REM — build the container
-          docker build -t %IMAGE_NAME%:latest .
+          REM ─ Authenticate with GCP & set up Docker auth
+          gcloud auth activate-service-account --key-file=%GCLOUD_KEY% --project=%GCP_PROJECT%
+          gcloud auth configure-docker australia-southeast1-docker.pkg.dev
 
-          REM — login via JSON key
-          echo %DOCKER_PSW% | docker login -u %DOCKER_USR% --password-stdin https://australia-southeast1-docker.pkg.dev
-          REM — show the SA in the JSON blob
-          echo %DOCKER_PSW% | findstr /c:"\"client_email\""
-          REM — show which identity Docker is using
-          docker --config %USERPROFILE%/.docker/config.json info
-          REM — push to Artifact Registry
+          REM ─ Build and push
+          docker build -t %IMAGE_NAME%:latest .
           docker push %IMAGE_NAME%:latest
         """
       }
     }
   }
 }
+
 
     stage('Run Unit Tests') {
       steps {
