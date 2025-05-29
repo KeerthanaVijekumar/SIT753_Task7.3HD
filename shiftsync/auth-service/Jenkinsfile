@@ -44,5 +44,37 @@ pipeline {
         }
       }
     }
+
+    stage('Security Analysis') {
+      steps {
+        script {
+          bat """
+            cd shiftsync\\auth-service
+            npm install
+            npm audit --json > audit-report.json
+          """
+
+          def auditReport = readJSON file: 'shiftsync/auth-service/audit-report.json'
+
+          def vulnerabilities = auditReport.metadata.vulnerabilities
+          def critical = vulnerabilities.critical ?: 0
+          def high = vulnerabilities.high ?: 0
+          def moderate = vulnerabilities.moderate ?: 0
+          def low = vulnerabilities.low ?: 0
+
+          echo "Vulnerabilities found:"
+          echo "Critical: ${critical}"
+          echo "High: ${high}"
+          echo "Moderate: ${moderate}"
+          echo "Low: ${low}"
+
+          if (critical > 0 || high > 0) {
+            error("Build failed due to critical/high vulnerabilities")
+          } else {
+            echo "No critical or high vulnerabilities. Proceeding..."
+          }
+        }
+      }
+    }
   }
 }
