@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Create Shift - Admin</title>
+  <link rel="stylesheet" href="/admin/admin.css" />
+   <script src="/admin/create-shift.js" defer></script>
+</head>
+<body>
+  <h2>Create a New Shift</h2>
+  <iframe name="hidden_iframe" style="display:none;"></iframe>
+  <form id="createShiftForm" method="post" action="http://34.116.118.12:3000/shifts">
+    <label for="shiftId">Shift ID:</label><br />
+    <input type="text" id="shiftId" name="shiftId" placeholder="Unique Shift ID" required /><br /><br />
+
+    <label for="date">Date:</label><br />
+    <input type="date" id="date" name="date" required /><br /><br />
+
+    <label for="startTime">Start Time:</label><br />
+    <input type="time" id="startTime" name="startTime" required /><br /><br />
+
+    <label for="endTime">End Time:</label><br />
+    <input type="time" id="endTime" name="endTime" required /><br /><br />
+
+    <button type="submit">Create Shift</button>
+  </form>
+  <div id="message"></div>
+
+  <script src="/admin/create-shift.js"></script>
+</body>
+</html>

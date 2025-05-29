@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Employee Dashboard | ShiftSync</title>
+  <link rel="stylesheet" href="/employee/employee.css">
+</head>
+<body>
+  <div class="dashboard-container">
+    <header>
+      <h2>ShiftSync Employee Dashboard</h2>
+      <button id="logoutBtn">Logout</button>
+    </header>
+
+    <nav class="tab-menu">
+      <button class="tab" data-tab="available">Available Shifts</button>
+      <button class="tab" data-tab="roster">My Roster</button>
+      <button class="tab" data-tab="clock">Clock In / Out</button>
+    </nav>
+
+    <section id="content-area">
+      <!-- dynamic content will be injected here -->
+    </section>
+  </div>
+
+  <script src="/employee/employee.js"></script>
+</body>
+</html>

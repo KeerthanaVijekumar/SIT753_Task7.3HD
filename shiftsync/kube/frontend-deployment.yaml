@@ -1,0 +1,24 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: frontend
+  template:
+    metadata:
+      labels:
+        app: frontend
+    spec:
+      containers:
+        - name: frontend
+          image: australia-southeast1-docker.pkg.dev/shiftsync-gcp/shiftsync-repo/frontend-service:latest
+          ports:
+            - containerPort: 3003
+          env:
+            - name: AUTH_API_URL
+              value: "http://35.189.38.17:3000"
+            - name: ADMIN_API_URL
+              value: "http://34.116.118.12:3000"

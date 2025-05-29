@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Admin Dashboard - ShiftSync</title>
+  <link rel="stylesheet" href="/admin/admin.css">
+</head>
+<body>
+  <div class="admin-container">
+    <h1>Admin Dashboard</h1>
+
+    <nav class="admin-nav">
+      <button onclick="showTab('welcome')"> Dashboard</button>
+      <button onclick="showTab('create-shift')"> Create Shift</button>
+      <button onclick="showTab('view-shifts')"> View Shifts</button>
+      <button onclick="loadAndShowApproveTimesheets()"> Approve Timesheets</button>
+      <button onclick="logout()">Logout</button>
+    </nav>
+
+    <div class="tab-content">
+      <div id="welcome" class="tab-section active">
+        <h2>Welcome, Admin</h2>
+        <p>Use the navigation tabs above to manage shifts and timesheets.</p>
+      </div>
+
+      <div id="create-shift" class="tab-section">
+        <p>Loading create-shift form...</p>
+      </div>
+
+      <div id="view-shifts" class="tab-section">
+        <p>Shifts will be displayed here...</p>
+      </div>
+
+      <div id="approve-timesheets" class="tab-section">
+        <p>Pending timesheets will appear here...</p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function showTab(tabId) {
+      document.querySelectorAll('.tab-section').forEach(tab => {
+        tab.classList.remove('active');
+      });
+      document.getElementById(tabId).classList.add('active');
+    }
+
+    function logout() {
+      localStorage.clear();
+      window.location.href = '/login/login.html';
+    }
+
+    // Load create-shift.html into its tab on page load
+  function loadCreateShift() {
+  fetch('/admin/create-shift.html')
+    .then(res => res.text())
+    .then(html => {
+      const div = document.getElementById('create-shift');
+      div.innerHTML = html;
+
+  
+      const existingScript = div.querySelector('script[src="/admin/create-shift.js"]');
+      if (existingScript) existingScript.remove();
+
+      // Append fresh script to force reload and execution
+      const script = document.createElement('script');
+      script.src = '/admin/create-shift.js';
+      div.appendChild(script);
+    });
+}
+
+
+    // Load viewShifts.html and viewShifts.js dynamically
+    function loadViewShifts() {
+      const div = document.getElementById('view-shifts');
+      fetch('/admin/viewShifts.html')
+        .then(res => res.text())
+        .then(html => {
+          div.innerHTML = html;
+
+          const script = document.createElement('script');
+          script.src = '/admin/viewShifts.js';
+          script.onload = () => {
+            if (window.loadShifts) window.loadShifts();
+          };
+          div.appendChild(script);
+        });
+    }
+
+    // Initial load of create-shift tab content
+    loadCreateShift();
+
+    // Attach loadViewShifts to View Shifts tab button
+    document.querySelector('button[onclick="showTab(\'view-shifts\')"]').addEventListener('click', loadViewShifts);
+
+    //load picked shifts
+ function loadApproveTimesheets() {
+      const div = document.getElementById('approve-timesheets');
+      fetch('/admin/approveTimesheets.html')
+        .then(res => res.text())
+        .then(html => {
+          div.innerHTML = html;
+
+          if (!document.querySelector('script[src="/admin/approveTimesheets.js"]')) {
+            const script = document.createElement('script');
+            script.src = '/admin/approveTimesheets.js';
+            script.onload = () => {
+              if (window.loadPickedShifts) window.loadPickedShifts();
+            };
+            document.body.appendChild(script);
+          } else {
+            if (window.loadPickedShifts) window.loadPickedShifts();
+          }
+        });
+    }
+
+
+function loadAndShowApproveTimesheets() {
+  showTab('approve-timesheets');
+  loadApproveTimesheets();
+}
+
+  </script>
+</body>
+</html>
