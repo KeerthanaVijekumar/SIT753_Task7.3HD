@@ -7,6 +7,7 @@ pipeline {
   }
 
   stages {
+
     stage('Build & Push Docker Image') {
       steps {
         script {
@@ -20,5 +21,17 @@ pipeline {
         }
       }
     }
-  }
+
+    stage('Run Unit Tests') {
+      steps {
+        bat """
+          npm install
+          start /B node auth.js
+          timeout /T 3
+          npm test
+        """
+      }
+    }
+
+  } // ← closes `stages`
 }
