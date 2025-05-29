@@ -39,7 +39,8 @@ stage('Build & Push Docker Image') {
 
           REM — login via JSON key
           echo %DOCKER_PSW% | docker login -u %DOCKER_USR% --password-stdin https://australia-southeast1-docker.pkg.dev
-
+          REM — show which identity Docker is using
+          docker --config %USERPROFILE%/.docker/config.json info
           REM — push to Artifact Registry
           docker push %IMAGE_NAME%:latest
         """
