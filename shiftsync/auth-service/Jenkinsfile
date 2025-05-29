@@ -5,26 +5,43 @@ pipeline {
     IMAGE_NAME           = "australia-southeast1-docker.pkg.dev/shiftsync-gcp/shiftsync-repo/auth-service"
     REGISTRY_CREDENTIALS = credentials('gcp-artifact-creds')
     JWT_SECRET           = credentials('jwt-secret')
+    DEPLOY_CREDENTIALS   = credentials('jenkins-release-sa-key')
     GCP_PROJECT          = "shiftsync-gcp"
     GKE_CLUSTER          = "shiftsync-cluster"
     GKE_ZONE             = "australia-southeast1-b"
     K8S_NAMESPACE        = "default"
+    CLOUDDEPLOY_REGION   = "australia-southeast1"
   }
 
   stages {
-    stage('Build & Push Docker Image') {
-      steps {
-        script {
-          def dockerLogin = 'echo %REGISTRY_CREDENTIALS_PSW% | docker login -u _json_key --password-stdin https://australia-southeast1-docker.pkg.dev'
-          bat """
-            cd shiftsync\\auth-service
-            docker build -t ${IMAGE_NAME}:latest .
-            ${dockerLogin}
-            docker push ${IMAGE_NAME}:latest
-          """
-        }
+  stage('Check Registry Creds') {
+  steps {
+    bat """
+      echo USER:  %REGISTRY_CREDENTIALS_USR%
+      echo PSW‐HEAD: %REGISTRY_CREDENTIALS_PSW:~0,10%
+    """
+  }
+}
+
+
+stage('Build & Push (via gcloud)') {
+  steps {
+    dir('shiftsync/auth-service') {
+      withCredentials([file(credentialsId: 'gcp-artifact-creds', variable: 'GCLOUD_KEY')]) {
+        bat """
+          REM Authenticate to GCP & configure Docker
+          gcloud auth activate-service-account --key-file=%GCLOUD_KEY% --project=%GCP_PROJECT%
+          gcloud auth configure-docker australia-southeast1-docker.pkg.dev
+
+          REM Build & push
+          docker build -t ${IMAGE_NAME}:latest .
+          docker push ${IMAGE_NAME}:latest
+        """
       }
     }
+  }
+}
+
 
     stage('Run Unit Tests') {
       steps {
@@ -82,6 +99,26 @@ pipeline {
         }
       }
     }
-    
+
+   stage('Release to Production') {
+      steps {
+        withCredentials([file(credentialsId: 'jenkins-release-sa-key', variable: 'GCLOUD_KEY')]) {
+          bat """
+            gcloud auth activate-service-account --key-file=%GCLOUD_KEY%
+            gcloud config set project %GCP_PROJECT%
+
+            REM Apply/update Cloud Deploy pipeline
+            gcloud deploy apply --file=%WORKSPACE%\\clouddeploy.yaml --region=%CLOUDDEPLOY_REGION%
+
+            REM Create a new release from our latest image
+            gcloud deploy releases create "r${BUILD_NUMBER}" \
+              --delivery-pipeline=auth-service-pipeline \
+              --region=%CLOUDDEPLOY_REGION% \
+              --images auth-service=%IMAGE_NAME%:latest
+          """
+        }
+      }
+    }
+
   }
 }
