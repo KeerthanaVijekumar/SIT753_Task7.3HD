@@ -29,7 +29,7 @@ app.post('/login', (req, res) => {
   res.json({ token, role: user.role });
 });
 
-// === VERSION ===
+// === VERSION Check===
 app.get('/version', (req, res) => {
   res.json({ version: '1.0.0-auth', updated: new Date().toISOString() });
 });
