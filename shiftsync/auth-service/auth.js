@@ -34,7 +34,7 @@ app.get('/version', (req, res) => {
   res.json({ version: '1.0.0-auth', updated: new Date().toISOString() });
 });
 
-// Start server
+// Start server version
 app.listen(PORT, () => {
   console.log(`Auth service running on port ${PORT}`);
 });
